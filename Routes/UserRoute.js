@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../Models/User');
 const Customer = require('../Models/Customer');
 const Trainer = require('../Models/Trainer');
+const PersonalLibrary = require('../Models/PersonalLibrary');
 const createError = require('http-errors')
 const mongoose = require('mongoose');
 const { authorizationSchema } = require('../Helpers/ValidationSchema')
@@ -113,54 +114,79 @@ router.delete('/:id', verifyAccessToken, async (req, res, next) => {
     })
 })
 
-//POST REQUEST SIGNUP
+// POST REQUEST SIGNUP
 router.post('/signup', async (req, res, next) => {
-    try {
-        const result = await authorizationSchema.validateAsync(req.body)
-        const doesExist = await User.findOne({ email: result.email })
-        if (doesExist) throw createError.Conflict(`${result.email} has already been registered`)
-        
-        const user = new User({
-            _id: new mongoose.Types.ObjectId,
-            username: result.username,
-            firstname: result.firstname,
-            lastname: result.lastname,
-            dateofbirth: result.dateofbirth,
-            gender: result.gender,
-            role:result.role,
-            status:"ACTIVE",
-            password: result.password,
-            email: result.email
-        })
-  
-        const savedUser = await user.save()
-        if (result.role === 'Customer') {
-              const customer = new Customer({
-                  user: savedUser._id,
-                  weight: result.weight,
-                  height: result.height,
-                  dateofbirth: result.dateofbirth
-              })
-              await customer.save();
-             
-          } else if (result.role === 'Trainer') {
-              const trainer = new Trainer({
-                  user: savedUser._id,
-                  trainer_description: result.trainer_description,
-                  trainer_picture: result.trainer_picture,
-                  trainer_specialization: result.trainer_specialization
-              })
-              await trainer.save();
-          }
-  
-        const accessToken = await signAccessToken(savedUser.id)
-        const refreshToken = await signRefreshToken(savedUser.id)
-        res.send({ accessToken, refreshToken })
-    } catch (error) {
-        if (error.isJoi === true) error.status = 422
-        next(error)
+  try {
+    const result = await authorizationSchema.validateAsync(req.body);
+    const doesExist = await User.findOne({ email: result.email });
+    if (doesExist) throw createError.Conflict(`${result.email} has already been registered`);
+
+
+    console.log('Creating user...');
+    const user = new User({
+      _id: new mongoose.Types.ObjectId(),
+      username: result.username,
+      firstname: result.firstname,
+      lastname: result.lastname,
+      gender: result.gender,
+      role: result.role,
+      status: "ACTIVE",
+      password: result.password,
+      email: result.email
+    });
+
+    const savedUser = await user.save();
+    console.log('User created:', savedUser);
+
+    if (result.role === 'Customer') {
+      console.log('Creating customer...');
+      const customer = new Customer({
+        user: savedUser._id,
+        weight: result.weight,
+        height: result.height,
+        dateofbirth: result.dateofbirth
+      });
+
+      const savedCustomer = await customer.save();
+      console.log('Customer created:', savedCustomer);
+
+      console.log('Creating personal library...');
+      const personal_library = new PersonalLibrary({
+        _id: new mongoose.Types.ObjectId(),
+        personal_library_id: savedCustomer._id, // Use the customer's ID as the personal_library_id
+        username: savedUser.username,
+        workouts_purchased: []
+      });
+
+      const savedLibrary = await personal_library.save();
+      console.log('Personal library created:', savedLibrary);
+
+      savedCustomer.personal_library = savedLibrary._id;
+      await savedCustomer.save();
+      console.log('Customer updated with personal library:', savedCustomer);
+    } else if (result.role === 'Trainer') {
+      console.log('Creating trainer...');
+      const trainer = new Trainer({
+        user: savedUser._id,
+        trainer_description: result.trainer_description,
+        trainer_picture: result.trainer_picture,
+        trainer_specialization: result.trainer_specialization
+      });
+
+      await trainer.save();
+      console.log('Trainer created:', trainer);
     }
-  })
+
+    const accessToken = await signAccessToken(savedUser.id);
+    const refreshToken = await signRefreshToken(savedUser.id);
+    res.send({ accessToken, refreshToken });
+  } catch (error) {
+    if (error.isJoi === true) error.status = 422;
+    next(error);
+  }
+});
+
+
 
 
   
@@ -170,7 +196,7 @@ router.post('/signup', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
     try {
         const result = await authorizationSchema.validateAsync(req.body)
-        const user = User.findOne({ email:result.email })
+        const user = await User.findOne({ email:result.email })
 
         if (!user) throw createError.NotFound('User is not registered')
         if (user.status == "InActive") throw createError.NotFound('User has been deleted')
@@ -222,7 +248,7 @@ router.post('/refresh-token', async (req, res, next) => {
 
         const accessToken = await signAccessToken(userId)
         const refToken = await signRefreshToken(userId)
-        res.send({ accessToken: accessToken, refreshToken: refToken })
+        //res.send({ accessToken: accessToken, refreshToken: refToken })
 
     } catch (error) {
         next(error)

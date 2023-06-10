@@ -1,31 +1,39 @@
-const mongoose = require('mongoose')
-const Schema = mongoose.Schema 
+const mongoose = require('mongoose');
 
-const FitnessTrackSchema = new Schema({
-    
-    _id: mongoose.Schema.Types.ObjectId,
-    date:{
-        type: Date,
-        required: true
-    },
-    calories_eaten:{
-        type: String,
-        required: true
-    },
-    daily_calories:{
-        type: Number,
-        required: true
-    },
-    weight:{
-        type: Number,
-        required: true
-    },
-    bmi:{
-        type: Number,
-        required: true
-    }
+const fitnessTrackingSchema = new mongoose.Schema({
+  // Define the schema fields here
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
+  },
+  calories_eaten: {
+    type: Number,
+    required: true
+  },
+  daily_calories: {
+    type: Number,
+    required: true
+  },
+  weight: {
+    type: Number,
+    required: true
+  },
+  bmi: {
+    type: Number,
+    required: true
+  },
 
-})    
+  height: { 
+  type: String,
+  required: true
+  }
 
-const fitnesstrack = mongoose.model('FitnessTrack', FitnessTrackSchema);
-module.exports = fitnesstrack
+});
+
+const FitnessTracking = mongoose.model('FitnessTracking', fitnessTrackingSchema);
+module.exports = FitnessTracking;

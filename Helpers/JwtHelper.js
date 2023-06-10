@@ -45,7 +45,7 @@ module.exports = {
             const payload = {}
             const secret = process.env.REFRESH_TOKEN_SECRET
             const options = {
-                expiresIn :'1y',
+                expiresIn :'1yr',
                 issuer: 'pickurpage.com',
                 audience: userId,
             }

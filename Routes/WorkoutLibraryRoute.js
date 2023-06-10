@@ -11,36 +11,34 @@ const { signAccessToken, signRefreshToken, verifyRefreshToken, verifyAccessToken
 
 
 //add new workout in the workout library
-router.post('/workout', verifyAccessToken, (req, res, next) => {
-    try {
-        console.log(req.payload.aud)
-      const userId = req.payload.aud
-      const trainer = Trainer.findById(userId)
-      console.log(trainer)
-      if (!trainer) {
-        return res.status(403).json({ message: 'Only trainers can add workouts' })
-      }
-      const workout = new Workout({
-        _id: new mongoose.Types.ObjectId(),
-        workout_name: req.body.workout_name,
-        difficulty_level: req.body.difficulty_level,
-        workout_description: req.body.workout_description,
-       // exercise_sets: req.body.exercise_sets,
-        goal: req.body.goal,
-        calories_burned: req.body.calories_burned,
-        duration: req.body.duration,
-        workout_price: req.body.workout_price,
-        payment_successful: req.body.payment_successful,
-        workout_thumbnail: req.body.workout_thumbnail
-      })
-      const result = workout.save()
-      res.status(200).json({ message: "Workout Posted"})
-    } catch (error) {
-      next(error)
+router.post('/workout',verifyAccessToken,(req, res, next) => {
+  try {
+      console.log(req.payload.aud)
+    const userId = req.payload.aud
+    const trainer = Trainer.findById(userId)
+    console.log(trainer)
+    if (!trainer) {
+      return res.status(403).json({ message: 'Only trainers can add workouts' })
     }
-  })
-
-
+    const workout = new Workout({
+      _id: new mongoose.Types.ObjectId(),
+      workout_name: req.body.workout_name,
+      difficulty_level: req.body.difficulty_level,
+      workout_description: req.body.workout_description,
+     // exercise_sets: req.body.exercise_sets,
+      goal: req.body.goal,
+      calories_burned: req.body.calories_burned,
+      duration: req.body.duration,
+      workout_price: req.body.workout_price,
+      workout_thumbnail: req.body.workout_thumbnail,
+      created_by: req.body.created_by
+    })
+    const result = workout.save()
+    res.status(200).json({ message: "Workout Posted"})
+  } catch (error) {
+    next(error)
+  }
+})
 
 // post the tracking
 router.post('/WorkoutTracking',verifyAccessToken,(req, res, next) => {
@@ -73,6 +71,11 @@ router.post('/workouts/:workoutId/exercises', verifyAccessToken, async (req, res
   const workoutId = req.params.workoutId;
 
   try {
+    const userId = req.payload.aud
+    const trainer = Trainer.findById(userId)
+    if (!trainer) {
+      return res.status(403).json({ message: 'Only trainers can add workouts' })
+    }
     const workout = await Workout.findById(workoutId);
     if (!workout) {
       return res.status(404).json({
@@ -166,10 +169,9 @@ router.put('/workout/:id',verifyAccessToken, (req, res, next) => {
 
     Workout.findByIdAndUpdate(req.params.id, {
         $set: {
-            name: req.body.name,
+            workout_name: req.body.name,
             difficulty_level: req.body.difficulty_level,
-            description: req.body.description,
-            exercise_sets: req.body.exercise_sets,
+            workout_description: req.body.description,
             exercises: req.body.exercises,
             goal: req.body.goal,
             calories_burned: req.body.calories_burned,
@@ -206,8 +208,6 @@ router.put('/workouts/:workoutId/exercises/:exerciseId',verifyAccessToken, (req,
     const updatedExercise = {
         name: req.body.name,
         description: req.body.description,
-        sets: req.body.sets,
-        reps: req.body.reps,
         weight: req.body.weight,
         videoUrl: req.body.videoUrl,
         imageUrl: req.body.imageUrl
@@ -229,12 +229,13 @@ router.put('/workouts/:workoutId/exercises/:exerciseId',verifyAccessToken, (req,
         })
 });
 
+
 // Get all the workout
-router.get('/workouts',verifyAccessToken, async (req, res, next) => {
+router.get('/workouts', async (req, res, next) => {
   try {
     const workouts = await Workout.find().populate({
       path: 'exercises',
-      select: 'exercise_name exercise_description exercise_duration exercise_completed exercise_video'
+      select: 'exercise_name exercise_description exercise_duration exercise_completed exercise_video created_by'
     }).exec();
     
     res.status(200).json({ workout: workouts });

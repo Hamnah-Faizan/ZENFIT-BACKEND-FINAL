@@ -18,27 +18,7 @@ const WorkoutLibrarySchema = new Schema({
         type: String,
         required: true,
       },
-      /*
-      exercise_sets: {
-        type: [
-          {
-            exercise_name: {
-              type: String,
-              required: true,
-            },
-            reps: {
-              type: Number,
-              required: true,
-            },
-            rest_time: {
-              type: Number,
-              required: true,
-            },
-          },
-        ]
-       // required: true,
-      },
-      */
+     
       exercises: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Exercise'
@@ -65,6 +45,10 @@ const WorkoutLibrarySchema = new Schema({
       workout_thumbnail: {
         type: String,
         required: true,
+      },
+      created_by:{
+        type: String,
+        required: true
       }
     })
 

@@ -16,6 +16,7 @@ const CustomerSchema = new Schema({
         type: Date,
         required: true
     },
+    fitness_tracking: [{ type: mongoose.Schema.Types.ObjectId, ref: 'FitnessTracking' }],
     personal_library: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'PersonalLibrary'

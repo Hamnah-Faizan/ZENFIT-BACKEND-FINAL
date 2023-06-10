@@ -3,10 +3,12 @@ const Schema = mongoose.Schema
 const bcrypt = require('bcrypt')
 
 const UserSchema = new Schema({
+
+  _id: mongoose.Schema.Types.ObjectId,
   
     role:{
       type: String,
-      enum: ["Customer","Trainer"],
+      enum: ["Customer","Trainer","Admin"],
     }, 
     email: {
         type: String,
@@ -37,8 +39,7 @@ const UserSchema = new Schema({
     },
     status:{
         type: String,
-        enum: ["ACTIVE", "INACTIVE"],
-        required: true
+        enum: ["ACTIVE", "INACTIVE"]
     }
 })
 
